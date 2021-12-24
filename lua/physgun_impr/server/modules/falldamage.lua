@@ -26,7 +26,9 @@ function PhysImpr.PreventFallDamage(ent)
 end
 
 function PhysImpr.ResetFallProtection(ent)
-	PhysImpr.FallPrevent[ent] = engine.TickCount()
+	if PhysImpr.FallPrevent[ent] == true then
+		PhysImpr.FallPrevent[ent] = engine.TickCount()
+	end
 end
 
 hook.Add("GetFallDamage", "PhysImpr_NoFall", PhysImpr.PreventFallDamage)
