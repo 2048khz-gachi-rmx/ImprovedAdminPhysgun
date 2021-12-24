@@ -8,8 +8,8 @@ function PhysImpr.PreventNextFall(ent)
 end
 
 function PhysImpr.PreventFallDamage(ent, vel)
-	if not mod.State then print("not enabled!?") return end
-	if not PhysImpr.FallPrevent[ent] then print("fart balls") return end
+	if not mod.State then return end
+	if not PhysImpr.FallPrevent[ent] then return end
 
 	local tick = PhysImpr.FallPrevent[ent]
 
