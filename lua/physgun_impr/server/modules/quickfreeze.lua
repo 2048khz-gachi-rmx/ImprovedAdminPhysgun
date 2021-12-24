@@ -3,6 +3,18 @@ mod.Name = "Freeze players via RMB"
 
 PhysImpr.Frozen = {}
 
+function PhysImpr.FreezeEffect(ply)
+	PhysImpr.StartVis("PlayerFreeze")
+		net.WriteEntity(ply)
+	PhysImpr.SendVis()
+end
+
+function PhysImpr.UnfreezeEffect(ply)
+	PhysImpr.StartVis("PlayerUnfreeze")
+		net.WriteEntity(ply)
+	PhysImpr.SendVis()
+end
+
 function PhysImpr.UnfreezeIfFrozen(adm)
 	local ply = PhysImpr.GetHeldPlayer(adm)
 
@@ -10,6 +22,7 @@ function PhysImpr.UnfreezeIfFrozen(adm)
 
 	if frozen and engine.TickCount() > frozen then
 		PhysImpr.TryFreeze(adm, ply, true)
+		PhysImpr.UnfreezeEffect(ply)
 		PhysImpr.Frozen[ply] = nil
 	end
 end
@@ -40,6 +53,7 @@ hook.Add("SetupMove", "PhysImpr_Freeze", function(ply, mv, cmd)
 
 	-- RMB pressed, do the epic freeze
 	PhysImpr.TryFreeze(ply, tgt, false)
+	PhysImpr.FreezeEffect(tgt)
 	PhysImpr.Frozen[tgt] = engine.TickCount()
 end)
 

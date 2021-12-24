@@ -7,9 +7,9 @@ function PhysImpr.PreventNextFall(ent)
 	PhysImpr.FallPrevent[ent] = true
 end
 
-function PhysImpr.PreventFallDamage(ent)
-	if not mod.State then return end
-	if not PhysImpr.FallPrevent[ent] then return end
+function PhysImpr.PreventFallDamage(ent, vel)
+	if not mod.State then print("not enabled!?") return end
+	if not PhysImpr.FallPrevent[ent] then print("fart balls") return end
 
 	local tick = PhysImpr.FallPrevent[ent]
 
@@ -18,6 +18,12 @@ function PhysImpr.PreventFallDamage(ent)
 	-- then we're taking damage from that landing (=> prevent it)
 
 	if not isnumber(tick) or tick == engine.TickCount() then
+		local int = 64 + math.max(0, vel - 400) / 4
+		PhysImpr.StartVis("PlayerLand")
+			net.WriteVector(ent:GetPos())
+			net.WriteUInt(int, 16)
+		PhysImpr.SendVis()
+
 		return 0
 	else
 		-- didnt match; clean up any data we had

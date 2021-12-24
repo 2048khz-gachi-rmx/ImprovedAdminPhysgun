@@ -22,7 +22,7 @@ concommand.Add("improved_physgun_settings", function(...) coroutine.wrap(tryOpen
 
 surface.CreateFont("PhysImp_SettingFont", {
 	font = "Roboto", -- bundled with gmod, ez
-	size = 16, -- 17 makes it weirdly condensed, i like it
+	size = 16,
 	weight = 400,
 })
 
