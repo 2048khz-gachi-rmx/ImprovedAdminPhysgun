@@ -22,6 +22,12 @@ concommand.Add("improved_physgun_settings", function(...) coroutine.wrap(tryOpen
 
 surface.CreateFont("PhysImp_SettingFont", {
 	font = "Roboto", -- bundled with gmod, ez
+	size = 17,
+	weight = 400,
+})
+
+surface.CreateFont("PhysImp_SubSettingFont", {
+	font = "Roboto",
 	size = 16,
 	weight = 400,
 })
@@ -100,11 +106,11 @@ local function btnPaint(self, w, h)
 	LerpColor(1 - kfr, cur, deactive, active)
 	LerpColor(1 - kfr, knobcur, knobdeactive, knobactive)
 
-	local knob = 16
-	local kw = 42
+	local knob = h / 2
+	local kw = h * 1.2
 	local kh = 8
 
-	local x = 8
+	local x = 4
 	local x1 = x + kw * 0.05
 	local x2 = x + kw * 0.95 - knob / 2
 	local kx = Lerp(kfr, x1, x2)
@@ -114,13 +120,50 @@ local function btnPaint(self, w, h)
 
 	local tx = kw + x + knob / 2 + 8
 
-	white.a = 65 + fr * (255 - 65)
-	draw.SimpleText(self.Name, "PhysImp_SettingFont", tx, h / 2, white, 0, 1)
+	white.a = 65 + fr * (220 - 65)
+	draw.SimpleText(self.Name, self.Font, tx, h / 2, white, 0, 1)
 end
 
-local function makeSetting(scr, dat)
-	local btn = vgui.Create("DButton", scr)
-	btn:SetTall(32)
+local function makeSetting(scr, dat, canv)
+	local isSub = dat.IsSubModule
+
+	if not canv then
+		local subs = dat.SubModules and table.Count(dat.SubModules) or 0
+		canv = vgui.Create("DPanel", scr)
+		canv.RetractedSize = 32
+		canv.ExpandedSize = canv.RetractedSize + subs * 24
+
+		canv:SetTall(dat.State and canv.ExpandedSize or canv.RetractedSize)
+		canv:Dock(TOP)
+		canv.State = dat.State
+		canv.HovFrac = 0
+		canv.EasedFrac = 0
+
+		function canv:Paint(w, h)
+			dat = PhysImpr.Modules[dat.ID]
+
+			if dat.State ~= self.State then -- ew garrymations
+				self:SizeTo(w, dat.State and canv.ExpandedSize or canv.RetractedSize, 0.4, 0, 0.3)
+				self.State = dat.State
+			end
+
+			surface.SetDrawColor(42, 42, 42, canv.EasedFrac * 255)
+			surface.DrawRect(0, self.RetractedSize, w, h)
+		end
+
+		function canv:Think()
+			local hov = self:IsChildHovered()
+			local appr = FrameTime() * (hov and -4 or 4)
+			self.HovFrac = math.Approach(self.HovFrac, hov and 1 or 0, appr)
+
+			self.EasedFrac = hov and Ease(self.HovFrac, 0.3) or Ease(self.HovFrac, 2.3)
+		end
+	end
+
+
+
+	local btn = vgui.Create("DButton", canv)
+	btn:SetTall(canv.RetractedSize)
 	btn:Dock(TOP)
 
 	btn.HovFrac = 0
@@ -129,6 +172,7 @@ local function makeSetting(scr, dat)
 	btn.Name = dat.Name
 	btn.ID = dat.ID -- tables may be replaced; index by ID
 
+	btn.Font = isSub and "PhysImp_SubSettingFont" or "PhysImp_SettingFont"
 	btn.Paint = btnPaint
 	btn.Think = btnThink
 	btn:SetText("")
@@ -139,6 +183,16 @@ local function makeSetting(scr, dat)
 			net.WriteBool(not dat.State)
 		net.SendToServer()
 	end
+
+	if not isSub then
+		for k,v in pairs(dat.SubModules) do
+			local sub = makeSetting(scr, v, canv)
+			sub:DockMargin(24, 0, 0, 0)
+			sub:SetTall(24)
+		end
+	end
+
+	return btn
 end
 
 function PhysImpr.OpenSettingsGUI()
@@ -166,21 +220,38 @@ function PhysImpr.OpenSettingsGUI()
 	scr:Dock(FILL)
 
 	for id, dat in SortedPairs(PhysImpr.Modules) do
+		if dat.IsSubModule then continue end
+
 		makeSetting(scr, dat)
 	end
 end
 
+local function readModule(sub)
+	local id, name = net.ReadString(), net.ReadString()
+	local old = PhysImpr.Modules[id]
 
-net.Receive("Phys_RequestModules", function()
+	PhysImpr.Modules[id] = {
+		ID = id,
+		Name = name,
+		State = net.ReadBool(),
+		IsSubModule = not not sub,
+		SubModules = old and old.SubModules or (not sub and {})
+	}
+
+	return PhysImpr.Modules[id]
+end
+
+net.Receive("Phys_RequestModules", function(len)
 	local new = net.ReadUInt(8)
-	for i=1, new do
-		local id, name = net.ReadString(), net.ReadString()
 
-		PhysImpr.Modules[id] = {
-			ID = id,
-			Name = name,
-			State = net.ReadBool()
-		}
+	for i=1, new do
+		local mod = readModule(false)
+
+		local subs = net.ReadUInt(8)
+		for s=1, subs do
+			local sub = readModule(true)
+			mod.SubModules[sub.ID] = sub
+		end
 	end
 
 	PhysImpr.OpenSettingsGUI()

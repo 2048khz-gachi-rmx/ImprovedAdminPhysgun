@@ -2,10 +2,15 @@ include("_settings.lua")
 
 PhysImpr.Modules = PhysImpr.Modules or {}
 
-local mod = PhysImpr.Modules
-mod.Registered = mod.Registered or {}
+local mods = PhysImpr.Modules
+mods.Registered = mods.Registered or {}
 
-function mod.Register(id, perm)
+PhysImpr.Module = PhysImpr.Module or {}
+local mod = PhysImpr.Module
+mod.IsModule = true
+local meta = {__index = PhysImpr.Module}
+
+function mods.Register(id)
 	local stKey = "Module_" .. id
 	local state = PhysImpr.Settings.Get(stKey)
 
@@ -14,24 +19,51 @@ function mod.Register(id, perm)
 		PhysImpr.Settings.Set(stKey, state)
 	end
 
-	mod.Registered[id] = {
+	mods.Registered[id] = setmetatable({
 		ID = id,
 		Name = id, -- default
-		Permissions = istable(perm) and perm or {perm}, -- table-ify `perm`
 		State = state,
-	}
+		IsSubModule = false,
+		SubModules = {},
+		Known = {} -- table of what players are aware of this module
+	}, meta)
 
 
-	return mod.Registered[id]
+	return mods.Registered[id]
 end
 
-function mod.SwitchState(id, to)
-	if not mod.Registered[id] then
+function mod:AddSubModule(name)
+	local subName = "sub_" .. self.ID .. "_" .. name
+	local sub = mods.Register(subName)
+	sub.IsSubModule = true
+
+	self.SubModules[name] = sub
+	self.SubModules[subName] = sub
+
+	self.Known = {}
+
+	return sub
+end
+
+function mod:GetSubState(name)
+	if not self.State then return false end
+
+	if istable(name) and name.IsModule then
+		-- passed submodule? see if its ours, and if it is, return its' state
+		return self.SubModules[name.ID] and name.State
+	elseif isstring(name) then
+		-- match by submodule name
+		return self.SubModules[name] and self.SubModules[name].State
+	end
+end
+
+function mods.SwitchState(id, to)
+	if not mods.Registered[id] then
 		ErrorNoHalt("ERROR: No such PhysImpr module: " .. tostring(id) .. "\n")
 		return
 	end
 
-	mod.Registered[id].State = to
+	mods.Registered[id].State = to
 
 	local stKey = "Module_" .. id
 	local state = PhysImpr.Settings.Set(stKey, to)
