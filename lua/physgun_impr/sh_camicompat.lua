@@ -1,5 +1,25 @@
+
+
+-- actually screw that, if your admin mod sucks and cant do sync permissions, then you should swap it out
+function PhysImpr.HasCAMIAccess(actor, permName, target)
+	local perm = permName
+
+	if ULib and ulx then
+		-- use ULX's permissions
+		perm = "ulx " .. perm
+	end
+
+	return CAMI.PlayerHasAccess(actor, perm, nil, target)
+end
+
+
+--[==================================[
+	old async code below
+--]==================================]
+
 -- CAMI access is async and requires a coroutine
 
+--[[
 function PhysImpr.HasCAMIAccess(actor, permName, target)
 	if not CAMI then
 		-- !?
@@ -41,3 +61,4 @@ function PhysImpr.HasCAMIAccess(actor, permName, target)
 		return unpack(done)
 	end
 end
+]]

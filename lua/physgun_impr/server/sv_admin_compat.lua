@@ -5,7 +5,7 @@ function PhysImpr.TryFreeze(actor, target, unfreeze)
 	local permName = unfreeze and "unfreeze" or "freeze"
 
 	local has = PhysImpr.HasCAMIAccess(actor, permName, target)
-	if not has then return end
+	if not has then return false end
 
 	--[[if ulx then
 		ulx.freeze(actor, {target}, unfreeze)
@@ -18,6 +18,8 @@ function PhysImpr.TryFreeze(actor, target, unfreeze)
 	-- (which kills unfreeze-on-pickup)
 
 	target:Freeze(not unfreeze)
+
+	return true
 end
 
-PhysImpr.TryFreeze = PhysImpr.Util.Coroutinify(PhysImpr.TryFreeze)
+-- PhysImpr.TryFreeze = PhysImpr.Util.Coroutinify(PhysImpr.TryFreeze)
