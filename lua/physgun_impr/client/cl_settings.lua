@@ -185,7 +185,7 @@ local function makeSetting(scr, dat, canv)
 	end
 
 	if not isSub then
-		for k,v in pairs(dat.SubModules) do
+		for k,v in SortedPairs(dat.SubModules) do
 			local sub = makeSetting(scr, v, canv)
 			sub:DockMargin(24, 0, 0, 0)
 			sub:SetTall(24)
