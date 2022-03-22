@@ -31,7 +31,7 @@ end
 -- PhysImpr.TryFreeze = PhysImpr.Util.Coroutinify(PhysImpr.TryFreeze)
 
 function PhysImpr.TryUnfreeze(actor, target)
-	local permName = unfreeze and "unfreeze"
+	local permName = "unfreeze"
 
 	if actor then
 		local has = PhysImpr.HasCAMIAccess(actor, permName, target)
