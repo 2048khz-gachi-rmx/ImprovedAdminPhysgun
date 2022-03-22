@@ -31,7 +31,7 @@ function PhysImpr.UnfreezeIfFrozen(adm)
 	local frozen = ply and PhysImpr.Frozen[ply]
 
 	if frozen and engine.TickCount() > frozen then
-		PhysImpr.TryFreeze(adm, ply, true)
+		PhysImpr.TryUnfreeze(adm, ply)
 		PhysImpr.UnfreezeEffect(ply)
 		PhysImpr.Frozen[ply] = nil
 	end
@@ -51,6 +51,23 @@ hook.Add("FinishMove", "PhysImpr_Freeze", function(ply, mv)
 	if not PhysImpr.Frozen[ply] then return end
 
 	return true -- sauce engine drops the player slowly unless i do this
+end)
+
+-- Prevent suicide if they're frozen because otherwise they're gonna have issues respawning
+hook.Add("CanPlayerSuicide", "PhysImpr_Freeze", function(ply)
+	if not mod.State then return end
+	if not PhysImpr.Frozen[ply] then return end
+
+	return false
+end)
+
+-- Prevent suicide if they're frozen because otherwise they're gonna have issues respawning
+hook.Add("PostPlayerDeath", "PhysImpr_Freeze", function(ply)
+	if not mod.State then return end
+	if not PhysImpr.Frozen[ply] then return end
+
+	PhysImpr.Frozen[ply] = nil
+	PhysImpr.TryUnfreeze(nil, ply)
 end)
 
 -- Using SetupMove because addons may decide to prevent keys from StartCommand

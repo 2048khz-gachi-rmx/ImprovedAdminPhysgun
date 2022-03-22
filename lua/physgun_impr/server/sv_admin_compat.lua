@@ -1,11 +1,17 @@
 PhysImpr.Admin = PhysImpr.Admin or {}
 
--- async coroutine
-function PhysImpr.TryFreeze(actor, target, unfreeze)
-	local permName = unfreeze and "unfreeze" or "freeze"
 
-	local has = PhysImpr.HasCAMIAccess(actor, permName, target)
-	if not has then return false end
+function PhysImpr.TryFreeze(actor, target, unfreeze)
+	if unfreeze then
+		return PhysImpr.TryUnfreeze(actor, target)
+	end
+
+	local permName = "freeze"
+
+	if actor then
+		local has = PhysImpr.HasCAMIAccess(actor, permName, target)
+		if not has then return false end
+	end
 
 	--[[if ulx then
 		ulx.freeze(actor, {target}, unfreeze)
@@ -17,9 +23,22 @@ function PhysImpr.TryFreeze(actor, target, unfreeze)
 	-- it prevents you from picking up players frozen via ulx
 	-- (which kills unfreeze-on-pickup)
 
-	target:Freeze(not unfreeze)
+	target:Freeze(true)
 
 	return true
 end
 
 -- PhysImpr.TryFreeze = PhysImpr.Util.Coroutinify(PhysImpr.TryFreeze)
+
+function PhysImpr.TryUnfreeze(actor, target)
+	local permName = unfreeze and "unfreeze"
+
+	if actor then
+		local has = PhysImpr.HasCAMIAccess(actor, permName, target)
+		if not has then return false end
+	end
+
+	target:Freeze(false)
+
+	return true
+end
