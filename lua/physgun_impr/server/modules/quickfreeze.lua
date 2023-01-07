@@ -40,7 +40,6 @@ end
 hook.Add("PhysImpr_ReleasePlayer", "PhysImpr_FreezeUntrack", function(adm, ent)
 	if not mod.State then return end
 	if not ent:IsPlayer() then return end
-	if not PhysImpr.Perms.Has(adm, "PlayerFreeze") then return end
 
 	PhysImpr.UnfreezeIfFrozen(adm)
 end)

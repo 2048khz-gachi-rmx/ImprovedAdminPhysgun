@@ -44,7 +44,6 @@ end)
 
 hook.Add("OnPhysgunPickup", "PhysImpr_ProtectFall", function(pick, ent)
 	if not ent:IsPlayer() then return end
-	if not PhysImpr.Perms.Has(pick, "ProtectFall") then return end
 
 	PhysImpr.PreventNextFall(ent)
 end)
