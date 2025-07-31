@@ -19,6 +19,7 @@ function PhysImpr.PreventFallDamage(ent, vel)
 
 	if not isnumber(tick) or tick == engine.TickCount() then
 		local int = 64 + math.max(0, vel - 400) / 4
+
 		PhysImpr.StartVis("PlayerLand")
 			net.WriteVector(ent:GetPos())
 			net.WriteUInt(int, 16)
@@ -38,12 +39,21 @@ function PhysImpr.ResetFallProtection(ent)
 end
 
 hook.Add("GetFallDamage", "PhysImpr_NoFall", PhysImpr.PreventFallDamage)
+
 hook.Add("OnPlayerHitGround", "PhysImpr_FallUnprotect", function(ply)
 	PhysImpr.ResetFallProtection(ply)
 end)
 
+-- lambda players compat
+hook.Add("LambdaOnLandOnGround", "PhysImpr_FallUnprotect", function(ply)
+	PhysImpr.PreventFallDamage(ply, ply.l_FallVelocity or 0)
+	PhysImpr.ResetFallProtection(ply)
+	ply.l_FallVelocity = 0
+	-- don't return true to not stop the landing logic. we're just preventing fall damage.
+end)
+
 hook.Add("OnPhysgunPickup", "PhysImpr_ProtectFall", function(pick, ent)
-	if not ent:IsPlayer() then return end
+	if not PhysImpr.IsPlayer(ent) then return end
 
 	PhysImpr.PreventNextFall(ent)
 end)

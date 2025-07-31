@@ -24,7 +24,6 @@ function PhysImpr.TryFreeze(actor, target, unfreeze)
 	-- (which kills unfreeze-on-pickup)
 
 	target:Freeze(true)
-
 	return true
 end
 

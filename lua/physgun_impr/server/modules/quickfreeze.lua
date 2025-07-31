@@ -11,7 +11,7 @@ local noarr = mod:AddSubModule("NoArrest")
 noarr.Name = "[experimental] Frozen players cannot be arrested"
 noarr.IsRP = true
 
-PhysImpr.Frozen = {}
+PhysImpr.Frozen = PhysImpr.Frozen or {}
 
 function PhysImpr.FreezeEffect(ply)
 	PhysImpr.StartVis("PlayerFreeze")
@@ -39,7 +39,7 @@ end
 
 hook.Add("PhysImpr_ReleasePlayer", "PhysImpr_FreezeUntrack", function(adm, ent)
 	if not mod.State then return end
-	if not ent:IsPlayer() then return end
+	if not PhysImpr.IsPlayer(ent) then return end
 
 	PhysImpr.UnfreezeIfFrozen(adm)
 end)
@@ -100,13 +100,27 @@ local sfx_ric = {
 	"physics/glass/glass_impact_bullet4.wav",
 }
 
+function PhysImpr.PreventFrozenDamage(ply)
+	local snd = sfx_ric[math.random(#sfx_ric)]
+	ply:EmitSound(snd, 70, math.random(90, 110), 0.8)
+end
+
 hook.Add("PlayerShouldTakeDamage", "PhysImpr_FreezeDamage", function(ply, atk)
 	if not mod:GetSubState(nodmg) then return end
 
 	if PhysImpr.Frozen[ply] then
-		local snd = sfx_ric[math.random(#sfx_ric)]
-		ply:EmitSound(snd, 70, math.random(90, 110), 0.8)
+		PhysImpr.PreventFrozenDamage(ply)
 		return false
+	end
+end)
+
+hook.Add("EntityTakeDamage", "PhysImpr_FreezeDamage_LambdaCompat", function( ent, dmginfo )
+	if not PhysImpr.IsLambdaPlayer(ent) then return end
+	if not mod:GetSubState(nodmg) then return end
+
+	if PhysImpr.Frozen[ent] then
+		PhysImpr.PreventFrozenDamage(ent)
+		return true
 	end
 end)
 
